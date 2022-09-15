@@ -3,8 +3,11 @@ import os
 import numpy as np
 import argparse
 import scipy.misc
+import imageio
+import skimage
+from skimage.transform import resize
 
-DATA_DIR = '/DATA/CUB_200_2011/'  # change it if you download the dataset in another path
+DATA_DIR = 'data/CUB_200_2011/'  # change it if you download the dataset in another path
 
 IMAGES_FOLDER = 'images/'
 SEGMENTATION_FOLDER = 'segmentations/'
@@ -148,7 +151,7 @@ if __name__ == '__main__':
             h = int(max([xoffset, yoffset]))
             for in_path,folder in zip([img_path, seg_path], [IMAGES_FOLDER, SEGMENTATION_FOLDER]):
                 name = os.path.join(folder, '{}.{}'.format(idx, in_path.split('.')[-1]))
-                img = scipy.misc.imread(in_path)
+                img = imageio.imread(in_path)
                 _img = center_crop(img, [h,h], center=center, scale=1.2)
                 #_img = crop(img, [yoffset, xoffset], center=center)
                 try:
@@ -156,7 +159,7 @@ if __name__ == '__main__':
                         _img = _img[:,:,0]
                 except IndexError:
                     pass
-                _img = scipy.misc.imresize(_img, output_size)
+                _img = resize(_img, output_size)
                 out_path = os.path.join(cc_dir, name)
                 scipy.misc.imsave(out_path, _img)
                 print (" -- Save {}".format(out_path))
