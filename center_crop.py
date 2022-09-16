@@ -161,7 +161,7 @@ if __name__ == '__main__':
                     pass
                 _img = resize(_img, output_size)
                 out_path = os.path.join(cc_dir, name)
-                scipy.misc.imsave(out_path, _img)
+                imageio.imwrite(out_path, _img)
                 print (" -- Save {}".format(out_path))
                 f.write("{} ".format(name))
             f.write('\n')
