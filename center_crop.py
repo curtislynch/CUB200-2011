@@ -9,6 +9,7 @@ from skimage.transform import resize
 
 DATA_DIR = 'data/CUB_200_2011/'  # change it if you download the dataset in another path
 
+ORIGIN_FOLDER = 'origin/'
 IMAGES_FOLDER = 'images/'
 SEGMENTATION_FOLDER = 'segmentations/'
 IMAGES_ID_TXT = 'images.txt'
@@ -33,7 +34,7 @@ def make_args():
     parser.add_argument('-dd', '--data_dir', default=DATA_DIR, help='the parent directory including `images/``segmentation/` folders and `images.txt``bounding_boxes.txt` files of CUB200_2011 [default: %(default)s]')
     parser.add_argument('-ii', '--images_id', default=IMAGES_ID_TXT, help='image id file name [default: %(default)s]')
     parser.add_argument('-bb', '--bounding_boxes', default=BOUNDING_BOXES_TXT, help='bounding boxes file name [default: %(default)s]')
-    parser.add_argument('-os', '--output_size', default='80,80', help='resize images [default: %(default)s]')
+    parser.add_argument('-os', '--output_size', default='320,320', help='resize images [default: %(default)s]')
     parser.add_argument('-od', '--output_dir', default=CENTER_CROP_FOLDER, help='create a new directory to save processing images [default: %(default)s]')
     return parser.parse_args()
 
@@ -131,6 +132,7 @@ if __name__ == '__main__':
                    offset_w : offset_w + int(wo)]
 
     cc_dir = os.path.join(args.data_dir, args.output_dir)
+    cc_orig_dir = os.path.join(cc_dir, ORIGIN_FOLDER)
     cc_img_dir = os.path.join(cc_dir, IMAGES_FOLDER)
     cc_seg_dir = os.path.join(cc_dir, SEGMENTATION_FOLDER)
     try:
@@ -144,6 +146,7 @@ if __name__ == '__main__':
     with open(os.path.join(cc_dir, 'images_seg.txt'), 'w') as f:
         for ii in images_id:
             idx, path = ii
+            # orig_path = os.path.join(args.data_dir, ORIGIN_FOLDER, path)
             img_path = os.path.join(args.data_dir, IMAGES_FOLDER, path)
             seg_path = os.path.join(args.data_dir, SEGMENTATION_FOLDER, path.replace('.jpg','.png'))
             xmin, ymin, xoffset, yoffset = [float(n) for n in bounding_boxes[idx]]  #xoffset=width, yoffset=height
@@ -151,6 +154,7 @@ if __name__ == '__main__':
             h = int(max([xoffset, yoffset]))
             for in_path,folder in zip([img_path, seg_path], [IMAGES_FOLDER, SEGMENTATION_FOLDER]):
                 name = os.path.join(folder, '{}.{}'.format(idx, in_path.split('.')[-1]))
+                orig_img = imageio.imread(in_path)
                 img = imageio.imread(in_path)
                 _img = center_crop(img, [h,h], center=center, scale=1.2)
                 #_img = crop(img, [yoffset, xoffset], center=center)
@@ -166,3 +170,27 @@ if __name__ == '__main__':
                 f.write("{} ".format(name))
             f.write('\n')
 
+    with open(os.path.join(cc_dir, 'images_origin.txt'), 'w') as f:
+        for ii in images_id:
+            idx, path = ii
+            orig_path = os.path.join(args.data_dir, ORIGIN_FOLDER, path)
+            xmin, ymin, xoffset, yoffset = [float(n) for n in bounding_boxes[idx]]  #xoffset=width, yoffset=height
+            center = [int(xmin + xoffset/2), int(ymin + yoffset/2)]
+            h = int(max([xoffset, yoffset]))
+            for in_path,folder in zip([orig_path], [ORIGIN_FOLDER]):
+                name = os.path.join(folder, '{}.{}'.format(idx, in_path.split('.')[-1]))
+                orig_img = imageio.imread(in_path)
+                # img = imageio.imread(in_path)
+                # _img = center_crop(img, [h,h], center=center, scale=1.2)
+                #_img = crop(img, [yoffset, xoffset], center=center)
+                # try:
+                #     if _img.shape[2] < 3:   # for segmentation case: _img.shape = [xx,xx,2]
+                #         _img = _img[:,:,0]
+                # except IndexError:
+                #     pass
+                # _img = resize(_img, output_size)
+                out_path = os.path.join(cc_dir, name)
+                imageio.imwrite(out_path, orig_img)
+                print (" -- Save {}".format(out_path))
+                f.write("{} ".format(name))
+            f.write('\n')
